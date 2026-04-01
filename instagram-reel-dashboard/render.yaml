@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: snitch-reel-analytics
-    runtime: docker
-    healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 8000
