@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SNITCH · Reel Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root{
+  --terra:#E06F51; --terra-d:#C45A3E; --terra-l:#F0956F; --terra-dim:rgba(224,111,81,.12);
+  --bg:#0A0807; --surface:#111009; --surface2:#181512; --surface3:#201C18;
+  --border:rgba(255,255,255,.06); --border-l:rgba(255,255,255,.1);
+  --text:#F2EAE4; --muted:#8A7E78; --muted2:#5A5048;
+  --green:#3ECF8E; --blue:#4B8EF0; --lilac:#9B7FD4; --red:#E05252; --warm:#D4A55B;
+  --shadow:0 4px 24px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── SIGN-IN SCREEN ─── */
+#signinScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(224,111,81,.08) 0%, transparent 70%),var(--bg);
+  padding:24px;
+}
+.signin-wrap{width:100%;max-width:400px}
+.signin-brand{text-align:center;margin-bottom:40px}
+.signin-mark{
+  width:52px;height:52px;background:var(--terra);border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:900;color:#fff;margin-bottom:14px;
+  box-shadow:0 8px 24px rgba(224,111,81,.35);
+}
+.signin-brand h1{font-size:22px;font-weight:800;letter-spacing:.2em;color:var(--text)}
+.signin-brand p{font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:.03em}
+.signin-card{
+  background:var(--surface);border:1px solid var(--border-l);
+  border-radius:16px;padding:32px;box-shadow:var(--shadow);
+}
+.signin-card h2{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.signin-card .sub{font-size:12px;color:var(--muted);margin-bottom:28px;line-height:1.5}
+.form-group{margin-bottom:16px}
+.form-label{
+  display:block;font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:7px;
+}
+.form-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border-l);
+  border-radius:10px;padding:11px 14px;color:var(--text);font-size:13px;
+  font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.form-input:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(224,111,81,.12)}
+.form-input::placeholder{color:var(--muted2)}
+.btn-primary{
+  width:100%;background:var(--terra);color:#fff;border:none;
+  border-radius:10px;padding:13px;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;letter-spacing:.03em;
+  transition:background .15s,transform .1s,box-shadow .15s;
+  box-shadow:0 4px 14px rgba(224,111,81,.35);margin-top:8px;
+}
+.btn-primary:hover{background:var(--terra-d);box-shadow:0 6px 20px rgba(224,111,81,.45)}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.signin-skip{
+  text-align:center;margin-top:16px;
+  font-size:12px;color:var(--muted);
+}
+.signin-skip a{color:var(--terra);text-decoration:none;font-weight:500;cursor:pointer}
+.signin-skip a:hover{text-decoration:underline}
+.signin-notice{
+  display:flex;align-items:flex-start;gap:8px;
+  background:rgba(62,207,142,.06);border:1px solid rgba(62,207,142,.15);
+  border-radius:8px;padding:10px 12px;margin-top:16px;
+}
+.signin-notice-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+.signin-notice p{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ─── MAIN APP ─── */
+#appScreen{display:none;flex-direction:column;min-height:100vh}
+
+/* ─── NAV ─── */
+nav{
+  height:58px;background:rgba(10,8,7,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:sticky;top:0;z-index:100;
+}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-mark{
+  width:30px;height:30px;background:var(--terra);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:#fff;
+}
+.nav-name{font-size:14px;font-weight:800;letter-spacing:.18em}
+.nav-sub{font-size:10px;color:var(--muted);letter-spacing:.05em}
+.nav-right{display:flex;align-items:center;gap:12px}
+.user-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border-l);
+  border-radius:20px;padding:5px 12px 5px 8px;cursor:pointer;
+  transition:border-color .2s;
+}
+.user-pill:hover{border-color:var(--terra)}
+.user-avatar{
+  width:24px;height:24px;background:var(--terra);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.user-name{font-size:12px;font-weight:500;color:var(--text)}
+.user-dot{width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:2px}
+.btn-signout{
+  font-size:11px;color:var(--muted);background:none;border:none;
+  cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;
+}
+.btn-signout:hover{color:var(--text);background:var(--surface2)}
+.server-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);
+}
+.server-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2)}
+.server-dot.ok{background:var(--green)}
+.server-dot.err{background:var(--red)}
+.server-banner{
+  background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
+  border-radius:10px;padding:14px 18px;margin-bottom:20px;
+  display:none;align-items:flex-start;gap:12px;
+}
+.server-banner.show{display:flex}
+.server-banner-icon{font-size:18px;flex-shrink:0}
+.server-banner-body{}
+.server-banner-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.server-banner-text{font-size:12px;color:var(--muted);line-height:1.6}
+.server-banner-code{
+  display:inline-block;background:var(--surface3);border:1px solid var(--border-l);
+  border-radius:6px;padding:2px 8px;font-family:monospace;font-size:12px;
+  color:var(--terra-l);margin-top:6px;
+}
+
+/* ─── CONTENT ─── */
+.content{max-width:1360px;margin:0 auto;padding:28px 24px 80px;flex:1}
+
+/* ─── URL INPUT ─── */
+.url-card{
+  background:var(--surface);border:1px solid var(--border-l);
+  border-radius:14px;padding:24px;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.url-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(224,111,81,.4),transparent);
+}
+.url-card-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.url-card-header h2{font-size:15px;font-weight:700;color:var(--text)}
+.url-card-header span{font-size:11px;color:var(--muted);font-weight:400}
+.url-card p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.url-textarea{
+  width:100%;min-height:88px;background:var(--surface2);
+  border:1px solid var(--border-l);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-size:13px;
+  resize:vertical;outline:none;font-family:inherit;line-height:1.7;
+  transition:border-color .2s;
+}
+.url-textarea:focus{border-color:var(--terra)}
+.url-textarea::placeholder{color:var(--muted2)}
+.url-row{display:flex;gap:10px;margin-top:14px;align-items:center}
+.btn-go{
+  background:var(--terra);color:#fff;border:none;
+  border-radius:10px;padding:11px 24px;font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;letter-spacing:.03em;
+  transition:background .15s,box-shadow .15s;
+  box-shadow:0 4px 14px rgba(224,111,81,.3);
+  white-space:nowrap;
+}
+.btn-go:hover{background:var(--terra-d)}
+.btn-go:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.status-msg{font-size:12px;color:var(--muted);margin-left:4px}
+.prog{height:2px;background:var(--border);border-radius:2px;margin-top:14px;overflow:hidden;display:none}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--terra-d),var(--terra-l));border-radius:2px;transition:width .4s ease}
+
+/* ─── SECTION LABEL ─── */
+.section-label{
+  font-size:10px;font-weight:700;letter-spacing:.14em;
+  color:var(--muted);text-transform:uppercase;margin-bottom:14px;
+}
+
+/* ─── KPI CARDS ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr 1fr}}
+.kpi{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:18px;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--border-l)}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.kpi.k-plays::after{background:linear-gradient(90deg,var(--terra),var(--terra-l))}
+.kpi.k-likes::after{background:var(--red)}
+.kpi.k-comments::after{background:var(--blue)}
+.kpi.k-er::after{background:var(--warm)}
+.kpi.k-followers::after{background:var(--green)}
+.kpi.k-vr::after{background:var(--lilac)}
+.kpi-icon{font-size:18px;margin-bottom:10px}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:800;line-height:1;letter-spacing:-1px}
+.kpi-meta{font-size:10px;color:var(--muted);margin-top:6px}
+
+/* ─── CHARTS ─── */
+.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:600px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:18px;
+}
+.chart-card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.chart-wrap{position:relative;height:156px}
+
+/* ─── TABLE ─── */
+.table-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;flex-wrap:wrap;gap:10px;
+}
+.table-bar-left{display:flex;align-items:center;gap:10px}
+.tbl-title{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.tbl-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--terra-dim);color:var(--terra);border:1px solid rgba(224,111,81,.2);
+  border-radius:20px;min-width:26px;height:22px;
+  padding:0 9px;font-size:11px;font-weight:700;
+}
+.table-bar-right{display:flex;gap:8px;align-items:center}
+.search-input{
+  background:var(--surface2);border:1px solid var(--border-l);
+  border-radius:8px;padding:8px 12px;color:var(--text);
+  font-size:12px;outline:none;width:220px;font-family:inherit;
+  transition:border-color .2s;
+}
+.search-input:focus{border-color:var(--terra)}
+.search-input::placeholder{color:var(--muted2)}
+.btn-export{
+  background:transparent;color:var(--terra);
+  border:1px solid rgba(224,111,81,.3);
+  border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;
+  transition:background .15s,border-color .15s;
+}
+.btn-export:hover{background:var(--terra-dim);border-color:var(--terra)}
+.tbl-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;overflow-x:auto;
+}
+table{width:100%;border-collapse:collapse;min-width:920px}
+thead th{
+  padding:10px 14px;text-align:left;
+  font-size:10px;font-weight:600;letter-spacing:.1em;
+  color:var(--muted);text-transform:uppercase;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  white-space:nowrap;cursor:pointer;user-select:none;
+  transition:color .15s;
+}
+thead th:hover{color:var(--text)}
+thead th.sort-asc::after{content:" ↑";color:var(--terra)}
+thead th.sort-desc::after{content:" ↓";color:var(--terra)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+tbody td{padding:12px 14px;vertical-align:middle}
+
+.reel-cell{display:flex;align-items:center;gap:11px}
+.thumb{
+  width:44px;height:44px;border-radius:8px;
+  object-fit:cover;background:var(--surface3);flex-shrink:0;
+  border:1px solid var(--border);
+}
+.thumb-ph{
+  width:44px;height:44px;border-radius:8px;
+  background:var(--surface3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.reel-info{}
+.reel-handle{font-size:13px;font-weight:700;color:var(--terra-l);text-decoration:none;cursor:pointer}
+.reel-handle:hover{color:var(--terra);text-decoration:underline}
+.reel-cap{font-size:11px;color:var(--muted);max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.reel-link{font-size:10px;color:var(--muted2);margin-top:3px;display:block;text-decoration:none}
+.reel-link:hover{color:var(--terra)}
+
+.val{font-weight:700;font-size:13px}
+.val.plays{color:var(--terra-l)}
+.val.likes{color:var(--red)}
+.val.comments{color:var(--blue)}
+.val.er{color:var(--warm)}
+.val.vr{color:var(--lilac)}
+.val.fol{color:var(--green)}
+.val.nil{color:var(--muted2);font-weight:400}
+.date-v{font-size:11px;color:var(--muted)}
+.dur-v{font-size:12px;color:var(--muted)}
+.tag{
+  display:inline-block;background:var(--terra-dim);color:var(--terra);
+  border:1px solid rgba(224,111,81,.18);
+  border-radius:5px;padding:1px 6px;font-size:10px;margin:1px 2px 1px 0;
+}
+.badge-live{
+  display:inline-flex;align-items:center;gap:5px;
+  color:var(--green);font-size:11px;font-weight:600;
+}
+.badge-live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.badge-err{color:var(--red);font-size:11px;font-weight:600}
+
+/* ─── EMPTY ─── */
+.empty-state{
+  text-align:center;padding:80px 20px;
+}
+.empty-state-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty-state-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px}
+.empty-state-sub{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:28px;right:28px;
+  background:var(--surface2);border:1px solid var(--border-l);
+  border-radius:10px;padding:11px 18px;font-size:12px;color:var(--text);
+  opacity:0;transform:translateY(10px);transition:all .25s;
+  pointer-events:none;z-index:999;box-shadow:var(--shadow);
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ SIGN IN SCREEN ═══════════════════ -->
+<div id="signinScreen">
+  <div class="signin-wrap">
+
+    <div class="signin-brand">
+      <div class="signin-mark">S</div>
+      <h1>SNITCH</h1>
+      <p>Reel Analytics · Creator Intelligence</p>
+    </div>
+
+    <div class="signin-card">
+      <h2>Connect your account</h2>
+      <p class="sub">Log in with Instagram to pull accurate play counts, follower data, and more. Everything runs locally on your machine.</p>
+
+      <div class="form-group">
+        <label class="form-label" for="igUser">Instagram Username</label>
+        <input class="form-input" id="igUser" type="text" placeholder="@yourhandle" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="igPass">Password</label>
+        <input class="form-input" id="igPass" type="password" placeholder="Enter your password" autocomplete="current-password"/>
+      </div>
+
+      <button class="btn-primary" id="signinBtn" onclick="handleSignin()">Connect &amp; Continue</button>
+
+      <div class="signin-skip">
+        <a onclick="skipSignin()">Skip for now — use without login</a>
+      </div>
+
+      <div class="signin-notice">
+        <span class="signin-notice-icon">🔒</span>
+        <p>Your credentials are only sent to <strong>your local server</strong> at localhost:8000. They are never stored, logged, or transmitted anywhere else.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ MAIN APP ═══════════════════ -->
+<div id="appScreen">
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-mark">S</div>
+      <div>
+        <div class="nav-name">SNITCH</div>
+        <div class="nav-sub">Reel Analytics</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="server-pill" id="serverPill">
+        <span class="server-dot" id="serverDot"></span>
+        <span id="serverLabel">Connecting…</span>
+      </div>
+      <div class="user-pill" id="userPill">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">Guest</span>
+        <div class="user-dot"></div>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Server warning banner -->
+    <div class="server-banner" id="serverBanner">
+      <span class="server-banner-icon">⚠️</span>
+      <div class="server-banner-body">
+        <div class="server-banner-title">Backend server not running</div>
+        <div class="server-banner-text">
+          The analytics backend isn't reachable at <strong>localhost:8000</strong>. Open your terminal in the dashboard folder and run:
+          <div class="server-banner-code">uvicorn app:app --reload</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL Input -->
+    <div class="url-card">
+      <div class="url-card-header">
+        <h2>Analyze Reels</h2>
+        <span>One URL per line · Ctrl+Enter to run</span>
+      </div>
+      <p>Paste Instagram Reel links below. We'll pull plays, likes, comments, engagement rate, view rate, follower count, hashtags and more.</p>
+      <textarea class="url-textarea" id="urlInput"
+        placeholder="https://www.instagram.com/reel/ABC123/&#10;https://www.instagram.com/reel/DEF456/&#10;..."></textarea>
+      <div class="url-row">
+        <button class="btn-go" id="analyzeBtn" onclick="analyze()">Let's go 🚀</button>
+        <span class="status-msg" id="statusMsg"></span>
+      </div>
+      <div class="prog" id="prog"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- IP-blocking banner (shown when cloud server can't reach Instagram) -->
+    <div id="ipBlockBanner" style="display:none;align-items:flex-start;gap:14px;background:rgba(224,111,81,.12);border:1px solid rgba(224,111,81,.35);border-radius:12px;padding:18px 20px;margin-bottom:18px">
+      <span style="font-size:22px;line-height:1">🚫</span>
+      <div style="flex:1">
+        <div style="font-weight:700;color:#E06F51;margin-bottom:6px;font-size:14px">Instagram is blocking this server's IP address</div>
+        <div id="ipBlockMsg" style="color:#C0A89A;font-size:13px;line-height:1.6;margin-bottom:10px"></div>
+        <div style="color:#8A7E78;font-size:12px;line-height:1.7">
+          <strong style="color:#D4C0B8">Quick fix (free):</strong><br>
+          1. Sign up at <strong style="color:#E06F51">scraperapi.com</strong> → copy your API key (free tier: 1,000 req/month)<br>
+          2. On Render → open your service → <strong style="color:#D4C0B8">Environment</strong> tab → <strong style="color:#D4C0B8">Add env var</strong>:<br>
+          &nbsp;&nbsp;&nbsp;<code style="background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px;color:#E06F51">SCRAPERAPI_KEY</code> = <em>your-api-key</em><br>
+          3. Redeploy — done ✓
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsWrap" style="display:none">
+
+      <!-- KPIs -->
+      <div class="section-label">Overview</div>
+      <div class="kpi-grid">
+        <div class="kpi k-plays">
+          <div class="kpi-icon">▶️</div>
+          <div class="kpi-label">Total Plays</div>
+          <div class="kpi-value" id="kpiPlays">—</div>
+          <div class="kpi-meta" id="kpiPlaysMeta">—</div>
+        </div>
+        <div class="kpi k-likes">
+          <div class="kpi-icon">❤️</div>
+          <div class="kpi-label">Total Likes</div>
+          <div class="kpi-value" id="kpiLikes">—</div>
+          <div class="kpi-meta">combined</div>
+        </div>
+        <div class="kpi k-comments">
+          <div class="kpi-icon">💬</div>
+          <div class="kpi-label">Total Comments</div>
+          <div class="kpi-value" id="kpiComments">—</div>
+          <div class="kpi-meta">combined</div>
+        </div>
+        <div class="kpi k-er">
+          <div class="kpi-icon">🔥</div>
+          <div class="kpi-label">Avg Eng. Rate</div>
+          <div class="kpi-value" id="kpiER">—</div>
+          <div class="kpi-meta">(likes+comments)/plays</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="section-label">Performance Charts</div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">▶️ Plays per Reel</div>
+          <div class="chart-wrap"><canvas id="cPlays"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">❤️ Likes per Reel</div>
+          <div class="chart-wrap"><canvas id="cLikes"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">💬 Comments per Reel</div>
+          <div class="chart-wrap"><canvas id="cComments"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">🔥 Engagement Rate %</div>
+          <div class="chart-wrap"><canvas id="cER"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-bar">
+        <div class="table-bar-left">
+          <span class="tbl-title">Reel Breakdown</span>
+          <span class="tbl-count" id="tblCount">0</span>
+        </div>
+        <div class="table-bar-right">
+          <input class="search-input" id="searchInput" placeholder="Search handle, #hashtag…" oninput="filterTable()"/>
+          <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('handle')">Reel</th>
+              <th onclick="sortTable('post_date')">Date</th>
+              <th onclick="sortTable('duration')">Duration</th>
+              <th onclick="sortTable('views')">Plays</th>
+              <th onclick="sortTable('likes')">Likes</th>
+              <th onclick="sortTable('comments')">Comments</th>
+              <th onclick="sortTable('engagement_rate')">Eng. Rate</th>
+              <th>Hashtags</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+
+    </div><!-- /resultsWrap -->
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-state-icon">🎬</div>
+      <div class="empty-state-title">No reels analyzed yet</div>
+      <div class="empty-state-sub">Paste Instagram Reel URLs above<br>and hit <strong>Let's go</strong> to see the numbers</div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /appScreen -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config — auto-detect whether we're hosted or local ───────────────────────
+const API = (window.location.protocol === 'file:' || window.location.hostname === '')
+  ? 'http://localhost:8000'   // opened as a file → point to local server
+  : '';                        // hosted on Railway/Render → use relative URLs
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let session = { username: null, password: null, loggedIn: false };
+let allData = [], filteredData = [], charts = {}, sortKey = null, sortDir = 1;
+
+// ── Sign in flow ───────────────────────────────────────────────────────────────
+function handleSignin() {
+  const u = document.getElementById('igUser').value.trim().replace(/^@/, '');
+  const p = document.getElementById('igPass').value;
+  if (!u || !p) { showToast('Enter your username and password'); return; }
+  session = { username: u, password: p, loggedIn: true };
+  goToApp();
+}
+function skipSignin() {
+  session = { username: null, password: null, loggedIn: false };
+  goToApp();
+}
+function goToApp() {
+  document.getElementById('signinScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  if (session.loggedIn) {
+    const initials = session.username.slice(0,2).toUpperCase();
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = '@' + session.username;
+  } else {
+    document.getElementById('userAvatar').textContent = '👤';
+    document.getElementById('userName').textContent = 'Guest';
+  }
+  pingServer();
+}
+
+async function pingServer() {
+  const dot = document.getElementById('serverDot');
+  const lbl = document.getElementById('serverLabel');
+  const banner = document.getElementById('serverBanner');
+  try {
+    const r = await fetch(`${API}/api/scrape`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls: [] }),
+      signal: AbortSignal.timeout(4000)
+    });
+    // 422 = validation error = server IS up, just rejected empty payload
+    if (r.ok || r.status === 422 || r.status === 400) {
+      dot.className = 'server-dot ok';
+      lbl.textContent = 'Server online';
+      banner.classList.remove('show');
+    } else {
+      throw new Error('bad status');
+    }
+  } catch {
+    dot.className = 'server-dot err';
+    lbl.textContent = 'Server offline';
+    banner.classList.add('show');
+  }
+}
+function signOut() {
+  session = { username: null, password: null, loggedIn: false };
+  allData = []; filteredData = [];
+  document.getElementById('igUser').value = '';
+  document.getElementById('igPass').value = '';
+  document.getElementById('urlInput').value = '';
+  document.getElementById('resultsWrap').style.display = 'none';
+  document.getElementById('ipBlockBanner').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('statusMsg').textContent = '';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('signinScreen').style.display = 'flex';
+}
+document.getElementById('igPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSignin();
+});
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n == null) return null;
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return Math.round(n).toLocaleString();
+}
+function fmtDur(s) {
+  if (s == null) return null;
+  return `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+}
+function val(v, cls) {
+  if (v == null) return '<span class="val nil">—</span>';
+  return `<span class="val ${cls}">${v}</span>`;
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Analyze ───────────────────────────────────────────────────────────────────
+async function analyze() {
+  const raw = document.getElementById('urlInput').value.trim();
+  const urls = raw.split('\n').map(u => u.trim()).filter(u => u && u.includes('instagram'));
+  if (!urls.length) { showToast('Paste at least one Instagram Reel URL'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  const msg = document.getElementById('statusMsg');
+  const prog = document.getElementById('prog');
+  const fill = document.getElementById('progFill');
+
+  btn.disabled = true;
+  msg.textContent = `Analyzing ${urls.length} reel${urls.length > 1 ? 's' : ''}…`;
+  prog.style.display = 'block'; fill.style.width = '15%';
+  document.getElementById('emptyState').style.display = 'none';
+
+  try {
+    fill.style.width = '55%';
+    const payload = { urls };
+    if (session.loggedIn) { payload.username = session.username; payload.password = session.password; }
+    const res = await fetch(`${API}/api/scrape`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    fill.style.width = '90%';
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const json = await res.json();
+    fill.style.width = '100%';
+
+    allData = urls.map(url => {
+      const sc = extractSC(url);
+      return { shortcode: sc, url, ...(json.results[sc] || {}) };
+    });
+    filteredData = [...allData];
+    renderAll();
+    const ok = allData.filter(r => !r.error).length;
+    msg.textContent = `${ok} reel${ok !== 1 ? 's' : ''} analyzed ✓`;
+
+    // Show Instagram IP-blocking banner if every single reel failed
+    const allFailed = allData.length > 0 && allData.every(r => r.error);
+    const hint = allData.find(r => r.hint)?.hint || '';
+    const ipBanner = document.getElementById('ipBlockBanner');
+    if (allFailed && hint) {
+      document.getElementById('ipBlockMsg').textContent = hint;
+      ipBanner.style.display = 'flex';
+    } else {
+      ipBanner.style.display = 'none';
+    }
+
+    if (ok > 0) showToast('Numbers are in 🔥');
+    else if (allFailed) showToast('⚠️ Instagram blocked the server — see setup tip below');
+  } catch(e) {
+    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError';
+    msg.textContent = isNetwork ? 'Cannot reach server — is uvicorn running?' : 'Error: ' + e.message;
+    if (isNetwork) { document.getElementById('serverBanner').classList.add('show'); document.getElementById('serverDot').className='server-dot err'; document.getElementById('serverLabel').textContent='Server offline'; }
+    showToast(isNetwork ? '⚠️ Start your server: uvicorn app:app --reload' : 'Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => prog.style.display = 'none', 1200);
+  }
+}
+
+function extractSC(url) {
+  const m = url.match(/instagram\.com\/(?:reel|p|tv)\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : url.trim().replace(/\/$/, '').split('/').pop();
+}
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) analyze();
+});
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderKPIs(); renderCharts(); renderTable();
+  document.getElementById('resultsWrap').style.display = 'block';
+}
+
+function renderKPIs() {
+  const d = allData.filter(r => !r.error);
+  const sum = k => d.reduce((s, r) => s + (r[k] || 0), 0);
+  const avg = k => { const v = d.map(r => r[k]).filter(x => x != null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; };
+
+  document.getElementById('kpiPlays').textContent    = fmt(sum('views')) || '—';
+  document.getElementById('kpiLikes').textContent    = fmt(sum('likes')) || '—';
+  document.getElementById('kpiComments').textContent = fmt(sum('comments')) || '—';
+  document.getElementById('kpiER').textContent       = avg('engagement_rate') != null ? avg('engagement_rate').toFixed(2) + '%' : '—';
+  document.getElementById('kpiPlaysMeta').textContent = `across ${d.length} reel${d.length !== 1 ? 's' : ''}`;
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+const CHARTCFG = {
+  plays:    { bg: 'rgba(224,111,81,.75)',  br: '#E06F51' },
+  likes:    { bg: 'rgba(224,82,82,.75)',   br: '#E05252' },
+  comments: { bg: 'rgba(75,142,240,.75)',  br: '#4B8EF0' },
+  er:       { bg: 'rgba(212,165,91,.75)',  br: '#D4A55B' },
+  vr:       { bg: 'rgba(155,127,212,.75)', br: '#9B7FD4' },
+  followers:{ bg: 'rgba(62,207,142,.75)',  br: '#3ECF8E' },
+};
+function mkChart(id, labels, data, ck) {
+  if (charts[id]) charts[id].destroy();
+  const cfg = CHARTCFG[ck];
+  charts[id] = new Chart(document.getElementById(id).getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: cfg.bg, borderColor: cfg.br, borderWidth: 1.5, borderRadius: 5 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor:'#181512', borderColor:'rgba(255,255,255,.08)', borderWidth:1, titleColor:'#F2EAE4', bodyColor:'#8A7E78', padding:10, cornerRadius:8 }
+      },
+      scales: {
+        x: { ticks: { color:'#B0A09A', font:{size:10, weight:'600'}, maxRotation:20, minRotation:0 }, grid: { color:'rgba(255,255,255,.04)' } },
+        y: { ticks: { color:'#7A6E68', font:{size:9} }, grid: { color:'rgba(255,255,255,.04)' }, beginAtZero:true }
+      }
+    }
+  });
+}
+function renderCharts() {
+  const d = filteredData.filter(r => !r.error);
+  // Use short handle names on x-axis (strip @ and truncate to 10 chars)
+  const lbl = d.map(r => {
+    const h = (r.handle || r.author || '?').replace(/^@/, '');
+    return h.length > 10 ? h.slice(0, 10) + '…' : h;
+  });
+  mkChart('cPlays',    lbl, d.map(r => r.views || 0),           'plays');
+  mkChart('cLikes',    lbl, d.map(r => r.likes || 0),           'likes');
+  mkChart('cComments', lbl, d.map(r => r.comments || 0),        'comments');
+  mkChart('cER',       lbl, d.map(r => r.engagement_rate || 0), 'er');
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tblBody');
+  document.getElementById('tblCount').textContent = filteredData.length;
+
+  if (!filteredData.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--muted)">No reels match your search</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filteredData.map(r => {
+    if (r.error) {
+      const hintTxt = r.hint ? `<div class="reel-cap" style="color:var(--terra-l);margin-top:2px;font-size:10px">💡 ${r.hint}</div>` : '';
+      return `<tr>
+        <td><div class="reel-cell">
+          <div class="thumb-ph">❌</div>
+          <div>
+            <div class="reel-handle">${r.shortcode || '—'}</div>
+            <div class="reel-cap" style="color:var(--red)">${r.error}</div>
+            ${hintTxt}
+          </div>
+        </div></td>
+        <td colspan="7" style="color:var(--muted2)">—</td>
+        <td><span class="badge-err">✗ Failed</span></td>
+      </tr>`;
+    }
+
+    const thumb = r.thumbnail
+      ? `<img class="thumb" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="thumb-ph">🎬</div>`;
+
+    const tags = (r.hashtags || []).length
+      ? r.hashtags.slice(0, 4).map(h => `<span class="tag">#${h}</span>`).join('')
+      : '<span class="val nil">—</span>';
+
+    const date = r.post_date ? r.post_date.split(' ')[0] : null;
+
+    return `<tr>
+      <td><div class="reel-cell">
+        ${thumb}
+        <div class="reel-info">
+          <a class="reel-handle" href="https://www.instagram.com/${(r.author||'').replace('@','')}" target="_blank">${r.handle || r.author || '—'}</a>
+          <div class="reel-cap">${r.caption || ''}</div>
+          <a class="reel-link" href="https://www.instagram.com/reel/${r.shortcode}/" target="_blank">/reel/${r.shortcode}/</a>
+        </div>
+      </div></td>
+      <td class="date-v">${date || '<span class="val nil">—</span>'}</td>
+      <td class="dur-v">${fmtDur(r.duration) || '<span class="val nil">—</span>'}</td>
+      <td>${val(r.views != null ? fmt(r.views) : null, 'plays')}</td>
+      <td>${r.likes != null ? val(fmt(r.likes), 'likes') : '<span class="val nil" title="Instagram has hidden likes for this post">Hidden</span>'}</td>
+      <td>${val(r.comments != null ? fmt(r.comments) : null, 'comments')}</td>
+      <td>${val(r.engagement_rate != null ? r.engagement_rate.toFixed(2)+'%' : null, 'er')}</td>
+      <td>${tags}</td>
+      <td><span class="badge-live"><span class="badge-live-dot"></span>Live</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Sort + Filter ─────────────────────────────────────────────────────────────
+function sortTable(key) {
+  sortKey === key ? sortDir *= -1 : (sortKey = key, sortDir = 1);
+  filteredData.sort((a, b) => {
+    const av = a[key], bv = b[key];
+    if (av == null) return 1; if (bv == null) return -1;
+    return (av > bv ? 1 : -1) * sortDir;
+  });
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  const keys = ['handle','post_date','duration','views','likes','comments','engagement_rate'];
+  const i = keys.indexOf(key);
+  if (i >= 0) document.querySelectorAll('thead th')[i].classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  renderTable();
+}
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  filteredData = !q ? [...allData] : allData.filter(r =>
+    (r.handle||'').toLowerCase().includes(q) ||
+    (r.author||'').toLowerCase().includes(q) ||
+    (r.caption||'').toLowerCase().includes(q) ||
+    (r.hashtags||[]).some(h => ('#'+h).toLowerCase().includes(q)) ||
+    (r.shortcode||'').toLowerCase().includes(q)
+  );
+  renderCharts(); renderTable();
+}
+
+// ── Build export data ─────────────────────────────────────────────────────────
+function buildExportRows() {
+  const headers = ['Handle','Date','Duration(s)','Plays','Likes','Comments','Eng. Rate %','Hashtags','Reel URL'];
+  const rows = filteredData.map(r => [
+    r.handle||'',
+    r.post_date||'',
+    r.duration != null ? r.duration : '',
+    r.views != null ? r.views : '',
+    r.likes != null ? r.likes : '',
+    r.comments != null ? r.comments : '',
+    r.engagement_rate != null ? r.engagement_rate : '',
+    (r.hashtags||[]).join(' '),
+    `https://www.instagram.com/reel/${r.shortcode}/`
+  ]);
+  return { headers, rows };
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!filteredData.length) { showToast('No data to export'); return; }
+  const { headers, rows } = buildExportRows();
+  const csv = [headers,...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'snitch_reels.csv'; a.click();
+  showToast('CSV downloaded! 📊');
+}
+
+</script>
+</body>
+</html>
