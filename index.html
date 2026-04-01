@@ -368,7 +368,7 @@ tbody td{padding:12px 14px;vertical-align:middle}
 
       <div class="signin-notice">
         <span class="signin-notice-icon">🔒</span>
-        <p>Your credentials are only sent to <strong>your local server</strong> at localhost:8000. They are never stored, logged, or transmitted anywhere else.</p>
+        <p id="credNotice">Your credentials are only sent to the analytics server to authenticate Instagram requests. They are never stored, logged, or shared.</p>
       </div>
     </div>
 
@@ -404,12 +404,12 @@ tbody td{padding:12px 14px;vertical-align:middle}
   <!-- Content -->
   <div class="content">
 
-    <!-- Server warning banner -->
+    <!-- Server warning banner (content set dynamically based on hosted vs local) -->
     <div class="server-banner" id="serverBanner">
       <span class="server-banner-icon">⚠️</span>
       <div class="server-banner-body">
-        <div class="server-banner-title">Backend server not running</div>
-        <div class="server-banner-text">
+        <div class="server-banner-title" id="serverBannerTitle">Backend server not running</div>
+        <div class="server-banner-text" id="serverBannerText">
           The analytics backend isn't reachable at <strong>localhost:8000</strong>. Open your terminal in the dashboard folder and run:
           <div class="server-banner-code">uvicorn app:app --reload</div>
         </div>
@@ -581,29 +581,65 @@ function goToApp() {
   pingServer();
 }
 
+const IS_HOSTED = API === ''; // true when on Render/Railway, false when local
+
+// Set context-aware banner content immediately
+(function setBannerContent() {
+  const title = document.getElementById('serverBannerTitle');
+  const text  = document.getElementById('serverBannerText');
+  if (!title || !text) return;
+  if (IS_HOSTED) {
+    title.textContent = 'Service is starting up';
+    text.innerHTML = (
+      'The server is waking up from sleep (Render free tier hibernates after 15 min of inactivity). '
+      + '<strong>Please wait 30–60 seconds</strong> and try again — it will come back on its own. '
+      + 'No action needed on your end.'
+    );
+  }
+  // else: leave the default localhost message in place
+})();
+
 async function pingServer() {
-  const dot = document.getElementById('serverDot');
-  const lbl = document.getElementById('serverLabel');
+  const dot    = document.getElementById('serverDot');
+  const lbl    = document.getElementById('serverLabel');
   const banner = document.getElementById('serverBanner');
-  try {
-    const r = await fetch(`${API}/api/scrape`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls: [] }),
-      signal: AbortSignal.timeout(4000)
-    });
-    // 422 = validation error = server IS up, just rejected empty payload
-    if (r.ok || r.status === 422 || r.status === 400) {
-      dot.className = 'server-dot ok';
-      lbl.textContent = 'Server online';
-      banner.classList.remove('show');
-    } else {
-      throw new Error('bad status');
+
+  // On hosted deployments Render's free tier can take 30-60s to wake from sleep.
+  // Show a friendly "waking up" state and keep retrying until the server responds.
+  const TIMEOUT   = IS_HOSTED ? 65000 : 5000;
+  const MAX_TRIES = IS_HOSTED ? 8     : 1;
+  const RETRY_MS  = 8000;
+
+  if (IS_HOSTED) {
+    dot.className   = 'server-dot';      // neutral colour while waking
+    lbl.textContent = 'Waking server…';  // Render cold-start message
+  }
+
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    try {
+      const r = await fetch(`${API}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(TIMEOUT)
+      });
+      if (r.ok) {
+        dot.className   = 'server-dot ok';
+        lbl.textContent = 'Server online';
+        banner.classList.remove('show');
+        return; // success — stop retrying
+      }
+      throw new Error(`status ${r.status}`);
+    } catch {
+      if (attempt < MAX_TRIES - 1) {
+        // Still retrying — keep "waking" state, don't flash error yet
+        lbl.textContent = `Waking server… (${attempt + 2}/${MAX_TRIES})`;
+        await new Promise(res => setTimeout(res, RETRY_MS));
+      } else {
+        // All attempts exhausted
+        dot.className   = 'server-dot err';
+        lbl.textContent = IS_HOSTED ? 'Service unavailable' : 'Server offline';
+        banner.classList.add('show');
+      }
     }
-  } catch {
-    dot.className = 'server-dot err';
-    lbl.textContent = 'Server offline';
-    banner.classList.add('show');
   }
 }
 function signOut() {
@@ -698,9 +734,19 @@ async function analyze() {
     else if (allFailed) showToast('⚠️ Instagram blocked the server — see setup tip below');
   } catch(e) {
     const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError';
-    msg.textContent = isNetwork ? 'Cannot reach server — is uvicorn running?' : 'Error: ' + e.message;
-    if (isNetwork) { document.getElementById('serverBanner').classList.add('show'); document.getElementById('serverDot').className='server-dot err'; document.getElementById('serverLabel').textContent='Server offline'; }
-    showToast(isNetwork ? '⚠️ Start your server: uvicorn app:app --reload' : 'Error: ' + e.message);
+    const networkMsg = IS_HOSTED
+      ? 'Server is starting up — wait ~30s and try again'
+      : 'Cannot reach server — is uvicorn running?';
+    const toastMsg = IS_HOSTED
+      ? '⏳ Server waking up — try again in 30s'
+      : '⚠️ Start your server: uvicorn app:app --reload';
+    msg.textContent = isNetwork ? networkMsg : 'Error: ' + e.message;
+    if (isNetwork) {
+      document.getElementById('serverBanner').classList.add('show');
+      document.getElementById('serverDot').className = 'server-dot err';
+      document.getElementById('serverLabel').textContent = IS_HOSTED ? 'Starting up…' : 'Server offline';
+    }
+    showToast(isNetwork ? toastMsg : 'Error: ' + e.message);
   } finally {
     btn.disabled = false;
     setTimeout(() => prog.style.display = 'none', 1200);
